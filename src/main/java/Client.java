@@ -22,7 +22,7 @@ public class Client {
 					"PHONE_NUMBER", properties.getProperty("client.phoneNumber"),
 					"E_MAIL", properties.getProperty("client.eMail")
 					);
-			ObjectMapper mapper = new ObjectMapper();	//jackson
+			ObjectMapper mapper = new ObjectMapper();	//jackson 과 gson 의 차이점 알아냄
 			
 			String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);	//json형태의 문자열로 변환
 			
@@ -37,7 +37,7 @@ public class Client {
 //			System.out.println(jsonMap);
 //			
 //			System.out.println(jsonMap.get("DB_CONN_INFO"));
-//			//자바 8부터 지원
+//			//자바 8부터 지원 (base64가 되는걸 알아냄,)
 //			byte[] decodedXml = Base64.getDecoder().decode(jsonMap.get("XML_DATA"));
 //			byte[] decodedJson = Base64.getDecoder().decode(jsonMap.get("JSON_DATA"));
 			
