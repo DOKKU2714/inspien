@@ -6,7 +6,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 public class DAO {
-//    String dbUrl = "jdbc:oracle:thin:@localhost:1521:xe";
     String dbUrl;
     String dbId;
     String dbPw;
