@@ -3,7 +3,6 @@ package inspien;
 public class Requester {
     private String requestURL;
     private String inputData;
-    private String responseData;
   
     Requester(){}
     
