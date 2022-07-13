@@ -1,13 +1,17 @@
 import java.io.FileReader;
-import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import inspien.DAO;
+import inspien.DataHandler;
 import inspien.Requester;
+import inspien.vo.RequestDataVo;
 
 public class Client {
+	//입력 값을 그냥 map 말고 문자열로 바로 json으로 쏘게 하자 (굳이 jackson으로 하지 말자)
 	public static void main(String[] args) {
 		try {
 			String resource = "setting.properties";
@@ -17,33 +21,41 @@ public class Client {
 			properties.load(fileReader);
 			
 			//자바 9버전 이상부터 사용 가능한 Map.of 형태로 선언
-			Map<String, String> info = Map.of(
-					"NAME", properties.getProperty("client.name"),
-					"PHONE_NUMBER", properties.getProperty("client.phoneNumber"),
-					"E_MAIL", properties.getProperty("client.eMail")
-					);
-			ObjectMapper mapper = new ObjectMapper();	//jackson 과 gson 의 차이점 알아냄
+			Map<String, String> info = new HashMap<>();
+			info.put("NAME", properties.getProperty("client.name"));
+			info.put("PHONE_NUMBER", properties.getProperty("client.phoneNumber"));
+			info.put("E_MAIL", properties.getProperty("client.eMail"));
 			
-			String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);	//json형태의 문자열로 변환
+			ObjectMapper objectMapper = new ObjectMapper();	//jackson 의 클래스로 생성비용이 비쌈
 			
-			Requester requester = new Requester(properties.getProperty("client.requestURL"),
-						json);
+			String jsonInputData = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);	//json형태의 문자열로 변환
 			
-			String responseData = requester.sendRequest();
+			Requester requester = new Requester(properties.getProperty("client.requestURL"), jsonInputData);
+			String responseData = requester.getRequestData(); //가져온 
+
 			
-			mapper = new ObjectMapper();
-//			mapper.
+			DataHandler dataHandler = new DataHandler();
+			RequestDataVo requestDataVo = dataHandler.handlingRequestData(responseData);
+			System.out.println(requestDataVo.getDbConnInfo());
 			
-//			System.out.println(jsonMap);
-//			
-//			System.out.println(jsonMap.get("DB_CONN_INFO"));
-//			//자바 8부터 지원 (base64가 되는걸 알아냄,)
-//			byte[] decodedXml = Base64.getDecoder().decode(jsonMap.get("XML_DATA"));
-//			byte[] decodedJson = Base64.getDecoder().decode(jsonMap.get("JSON_DATA"));
+			String xmlRequestData = dataHandler.dataDecoding(requestDataVo.getXmlData(), "euc-kr");
+			String jsonRequestData = dataHandler.dataDecoding(requestDataVo.getJsonData(), "utf-8");
 			
-//			System.out.println(new String(decodedXml, "euc-kr"));
-//			System.out.println(new String(decodedJson, "utf-8"));
+			dataHandler.setXmlData(xmlRequestData);
+			dataHandler.setJsonData(jsonRequestData);
 			
+			dataHandler.deserializationXmlData();
+			
+			System.out.println(dataHandler.getHeaderVoList().size());
+			System.out.println(dataHandler.getDetailVoList().size());
+			
+			DAO dao = new DAO();
+			dao.select();
+			//가져온 requestDataVo 에서 db정보를 불러와서 DAO에 세팅하도록 하고 DB insert 한 뒤 select로 오늘 날짜로 넣은거 확인하기
+			
+			// DataHandler 객체에서 deserializationJsonData메소드로 jsonData VO 자료구조로 만들고 (그 전에 VO 를 패키지로 XML 과 JSON 으로 나누자)
+			
+			//ftp 파일 전송
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
