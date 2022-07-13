@@ -18,12 +18,12 @@ public class Requester {
         this.inputData = inputData;
     }
     
-    public String sendRequest() throws IOException {
+    public String getRequestData() throws IOException {
         URL url = new URL(this.requestURL); //url 객체를 요청을 보낼 url 을 통해 생성
 		HttpURLConnection httpUrlConnection = (HttpURLConnection)url.openConnection();//httpUrlConnection 객체를 가져옴
 		httpUrlConnection.setRequestMethod("POST");	//http method 설정
-		httpUrlConnection.setConnectTimeout(1000 * 10);	
-		httpUrlConnection.setReadTimeout(1000 * 5);
+		httpUrlConnection.setConnectTimeout(1000 * 1000);	
+		httpUrlConnection.setReadTimeout(1000 * 500);
 		httpUrlConnection.setRequestProperty("Content-type", "application/json;utf-8");	//http request message 의 헤더 설정
 		httpUrlConnection.setRequestProperty("Accept", "application/json;");
 		httpUrlConnection.setDoOutput(true);	

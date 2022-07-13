@@ -1,13 +1,15 @@
 import java.io.FileReader;
-import java.util.Base64;
 import java.util.Map;
 import java.util.Properties;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import inspien.DataHandler;
 import inspien.Requester;
+import inspien.vo.RequestDataVo;
 
 public class Client {
+	//입력 값을 그냥 map 말고 문자열로 바로 json으로 쏘게 하자 (굳이 jackson으로 하지 말자)
 	public static void main(String[] args) {
 		try {
 			String resource = "setting.properties";
@@ -22,27 +24,19 @@ public class Client {
 					"PHONE_NUMBER", properties.getProperty("client.phoneNumber"),
 					"E_MAIL", properties.getProperty("client.eMail")
 					);
-			ObjectMapper mapper = new ObjectMapper();	//jackson
+			ObjectMapper mapper = new ObjectMapper();	//jackson 의 클래스로 생성비용이 비쌈
 			
 			String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);	//json형태의 문자열로 변환
 			
-			Requester requester = new Requester(properties.getProperty("client.requestURL"),
-						json);
+			Requester requester = new Requester(properties.getProperty("client.requestURL"), json);
 			
-			String responseData = requester.sendRequest();
+			String responseData = requester.getRequestData();
 			
-			mapper = new ObjectMapper();
-//			mapper.
+			DataHandler data = new DataHandler();
 			
-//			System.out.println(jsonMap);
-//			
-//			System.out.println(jsonMap.get("DB_CONN_INFO"));
-//			//자바 8부터 지원
-//			byte[] decodedXml = Base64.getDecoder().decode(jsonMap.get("XML_DATA"));
-//			byte[] decodedJson = Base64.getDecoder().decode(jsonMap.get("JSON_DATA"));
-			
-//			System.out.println(new String(decodedXml, "euc-kr"));
-//			System.out.println(new String(decodedJson, "utf-8"));
+			RequestDataVo requestDataVo = data.handlingRequestData(responseData);
+			String xml = data.dataDecoding(requestDataVo.getXmlData(), "euc-kr");
+			data.deserializationXmlData(xml);
 			
 		} catch (Exception e) {
 			e.printStackTrace();

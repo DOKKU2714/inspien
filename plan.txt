@@ -4,6 +4,7 @@
 3. 가져온 XML_DATA를 base64 디코딩하고 euc-kr 로 인코딩해서 문자열로 저장 [DataHandler]
 4. 가져온 JSON_DATA를 base64 디코딩 후 UTF-8로 인코딩 후 문자열로 저장 [DataHandler]
 5. 문자열 XML_DATA를 파싱해서 자료구조로 만듦 [DataHandler]
+
 6. DB_CONN_INFO 를 통해 DB 접속 후 INSERT [DAO]
 7. 문자열 JSON_DATA 를 파싱해서 자료구조 > 파일로 만듦 [DataHandler]
 8. FTP_CONN_INFO 를 통해 FTP 서버 접속후 파일 전송 [FTPController]
