@@ -104,6 +104,9 @@ public class DAO {
         	preparedStatement.setString(14, "");
         	preparedStatement.setString(15, "");
         	preparedStatement.executeUpdate();
+        	
+        	//그냥 vo 두개 비교해서 detail 이랑 header 랑 ordernum 같은거 합쳐서 header 에 detail list 넣고
+			//여기서 addbatch 잘 하면서 하면될듯 for문 2개 돌리면서
         } catch (Exception e) {
             e.printStackTrace();
         }
