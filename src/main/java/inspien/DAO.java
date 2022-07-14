@@ -22,29 +22,29 @@ public class DAO {
 	private String dbId = "inspien01";
 	private String dbPw = "inspien01";
 //    private String sql;
-	private String insertSql = "INSERT INTO INSPIEN_XMLDATA_INFO "
-			+ "(ORDER_NUM, ITEM_SEQ, ORDER_ID, ORDER_DATE, ORDER_PRICE,"
-			+ "ORDER_QTY, RECEIVER_NAME, RECEIVER_NO, ETA_DATE, DESCIPTION ,DESTINATION "
-			+ ",ITEM_NAME, ITEM_QTY, ITEM_COLOR, ITEM_PRICE, SENDER)"
-			+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '김도현')";
+//	private String insertSql = "INSERT INTO INSPIEN_XMLDATA_INFO "
+//			+ "(ORDER_NUM, ITEM_SEQ, ORDER_ID, ORDER_DATE, ORDER_PRICE,"
+//			+ "ORDER_QTY, RECEIVER_NAME, RECEIVER_NO, ETA_DATE, DESCIPTION ,DESTINATION "
+//			+ ",ITEM_NAME, ITEM_QTY, ITEM_COLOR, ITEM_PRICE, SENDER)"
+//			+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '김도현')";
+//
+//	String selectSql = "SELECT * FROM " + "(SELECT * FROM INSPIEN_XMLDATA_INFO " + "WHERE SENDER = '김도현'"
+//			+ "ORDER BY CURRENT_DT DESC) " + "WHERE ROWNUM <= 200";
+//
+//	String tableInfoSql = "SELECT A.COLUMN_ID AS NO" + ", B.COMMENTS AS \"논리명\"" + ", A.COLUMN_NAME AS \"물리명\""
+//			+ ", A.DATA_TYPE AS \"자료 형태\"" + ", A.DATA_LENGTH AS \"길이\""
+//			+ ", DECODE(A.NULLABLE, 'N', 'No', 'Y', 'Yes') AS \"Null 허용\"" + ", '' AS \"식별자\""
+//			+ ", A.DATA_DEFAULT AS \"기본값\"" + ", B.COMMENTS AS \"코멘트\"" + "FROM  ALL_TAB_COLUMNS A " + "LEFT JOIN "
+//			+ "ALL_COL_COMMENTS B " + "ON A.OWNER = B.OWNER " + "AND A.TABLE_NAME = B.TABLE_NAME "
+//			+ "AND A.COLUMN_NAME = B.COLUMN_NAME " + "WHERE A.TABLE_NAME LIKE " + "'INSPIEN_XMLDATA_INFO' "
+//			+ "ORDER BY A.COLUMN_ID";
+//
+//	String deleteSql = "DELETE FROM INSPIEN_XMLDATA_INFO " + "WHERE SENDER = '김도현'";
 
-	String selectSql = "SELECT * FROM " + "(SELECT * FROM INSPIEN_XMLDATA_INFO " + "WHERE SENDER = '김도현'"
-			+ "ORDER BY CURRENT_DT DESC) " + "WHERE ROWNUM <= 200";
-
-	String tableInfoSql = "SELECT A.COLUMN_ID AS NO" + ", B.COMMENTS AS \"논리명\"" + ", A.COLUMN_NAME AS \"물리명\""
-			+ ", A.DATA_TYPE AS \"자료 형태\"" + ", A.DATA_LENGTH AS \"길이\""
-			+ ", DECODE(A.NULLABLE, 'N', 'No', 'Y', 'Yes') AS \"Null 허용\"" + ", '' AS \"식별자\""
-			+ ", A.DATA_DEFAULT AS \"기본값\"" + ", B.COMMENTS AS \"코멘트\"" + "FROM  ALL_TAB_COLUMNS A " + "LEFT JOIN "
-			+ "ALL_COL_COMMENTS B " + "ON A.OWNER = B.OWNER " + "AND A.TABLE_NAME = B.TABLE_NAME "
-			+ "AND A.COLUMN_NAME = B.COLUMN_NAME " + "WHERE A.TABLE_NAME LIKE " + "'INSPIEN_XMLDATA_INFO' "
-			+ "ORDER BY A.COLUMN_ID";
-
-	String deleteSql = "DELETE FROM INSPIEN_XMLDATA_INFO " + "WHERE SENDER = '김도현'";
-
-	public void select() throws ClassNotFoundException {
+	public void select(String sql) throws ClassNotFoundException {
 
 		try (Connection connection = DriverManager.getConnection(dbUrl, dbId, dbPw);
-				PreparedStatement preparedStatement = connection.prepareStatement(selectSql);
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);
 				ResultSet resultSet = preparedStatement.executeQuery();) {
 			System.out.println(resultSet);
 			while (resultSet.next()) {
@@ -72,22 +72,20 @@ public class DAO {
 		}
 	}
 
-	public void delete() throws ClassNotFoundException {
-		Class.forName("oracle.jdbc.driver.OracleDriver"); // 드라이버 실행
-
+	public void delete(String sql) throws ClassNotFoundException {
 		try (Connection connection = DriverManager.getConnection(dbUrl, dbId, dbPw);
-				PreparedStatement preparedStatement = connection.prepareStatement(deleteSql);) {
+				PreparedStatement preparedStatement = connection.prepareStatement(sql);) {
 			preparedStatement.executeUpdate();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void insert(List<JoinVo> dataList) throws ClassNotFoundException, SQLException {
+	public void insert(List<JoinVo> dataList, String sql) throws ClassNotFoundException, SQLException {
 		Class.forName("oracle.jdbc.driver.OracleDriver"); // 드라이버 실행
 		//try - with -resources 를 사용하면 자동으로 자원을 닫아주지만 try 문에서만 선언을 했기때문에 catch 에서 사용할 수 없어서 한번 더 감쌌다.
 		try (Connection connection = DriverManager.getConnection(dbUrl, dbId, dbPw);) {
-			try (PreparedStatement preparedStatement = connection.prepareStatement(insertSql);) {
+			try (PreparedStatement preparedStatement = connection.prepareStatement(sql);) {
 				connection.setAutoCommit(false);
 				for (int i = 0; i < dataList.size(); i++) {
 					preparedStatement.setString(1, String.valueOf(dataList.get(i).getOrderNum()));

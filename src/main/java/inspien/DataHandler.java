@@ -1,5 +1,6 @@
 package inspien;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -9,6 +10,15 @@ import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -17,6 +27,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import inspien.vo.DetailVo;
 import inspien.vo.HeaderVo;
 import inspien.vo.JoinVo;
+import inspien.vo.RecordVo;
 import inspien.vo.RequestDataVo;
 import inspien.vo.xmlWrapper.DetailVoXmlWrapper;
 import inspien.vo.xmlWrapper.HeaderVoXmlWrapper;
@@ -32,14 +43,14 @@ import lombok.Setter;
 public class DataHandler {
 	private String xmlData;
 	private String jsonData;
-	
+
 	private List<HeaderVo> headerVoList = new ArrayList<>();
 	private List<DetailVo> detailVoList = new ArrayList<>();
 	private List<JoinVo> joinVoList = new ArrayList<>();
-	
+
 	// 생성 비용이 비쌈
 	private ObjectMapper objectMapper = new ObjectMapper();
-	
+
 	public RequestDataVo handlingRequestData(String data) throws JsonMappingException, JsonProcessingException {
 		return this.objectMapper.readValue(data, RequestDataVo.class);
 	}
@@ -60,58 +71,72 @@ public class DataHandler {
 //		   return sb.toString();
 //	}
 
-	//jaxb 를 이용한 xml 파싱 후 각각의 VO 객체에 삽입
+	// jaxb 를 이용한 xml 파싱 후 각각의 VO 객체에 삽입
 	public void deserializationXmlData() throws JAXBException {
 		JAXBContext jaxbContext = JAXBContext.newInstance(HeaderVoXmlWrapper.class);
 		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
-		this.headerVoList = ((HeaderVoXmlWrapper) unmarshaller.unmarshal(new StringReader(this.xmlData))).getHeaderVoList();
-		
-		jaxbContext = JAXBContext.newInstance(DetailVoXmlWrapper.class); //XML 파싱을 위한 JAXBContext 객체 생성
+		this.headerVoList = ((HeaderVoXmlWrapper) unmarshaller.unmarshal(new StringReader(this.xmlData)))
+				.getHeaderVoList();
+
+		jaxbContext = JAXBContext.newInstance(DetailVoXmlWrapper.class); // XML 파싱을 위한 JAXBContext 객체 생성
 		unmarshaller = jaxbContext.createUnmarshaller(); // Unmarshaller 객체 생성
-		this.detailVoList = ((DetailVoXmlWrapper) unmarshaller.unmarshal(new StringReader(this.xmlData))).getDetailVoList(); //unmarshal 후 반환된 리스트
-		
-		//headerVo 와 detailVo 에서 orderNum 이같은 것들끼리 left join 하여 joinVo 에 매핑
+		this.detailVoList = ((DetailVoXmlWrapper) unmarshaller.unmarshal(new StringReader(this.xmlData)))
+				.getDetailVoList(); // unmarshal 후 반환된 리스트
+
+		// headerVo 와 detailVo 에서 orderNum 이같은 것들끼리 left join 하여 joinVo 에 매핑
 		int detailCursor = 0;
 		int count = 0;
-		for (int i = 0 ; i < this.headerVoList.size() ; i++) {
+		for (int i = 0; i < this.headerVoList.size(); i++) {
 			HeaderVo headerVo = this.headerVoList.get(i);
 			JoinVo joinVo = null;
 			count = detailCursor;
-				while (count < detailVoList.size()) {
-					DetailVo detailVo = detailVoList.get(count);
-					if (headerVo.getOrderNum() != detailVo.getOrderNum()) {
-						detailCursor = count;
-						break;
-					} else {
-						joinVo = JoinVo.builder()
-								.orderNum(headerVo.getOrderNum())
-								.orderId(headerVo.getOrderId())
-								.orderDate(headerVo.getOrderDate())
-								.orderPrice(headerVo.getOrderPrice())
-								.orderQty(headerVo.getOrderQty())
-								.receiverNo(headerVo.getReceiverNo())
-								.receiverName(headerVo.getReceiverName())
-								.destination(headerVo.getDestination())
-								.desciption(headerVo.getDesciption())
-								.etaDate(headerVo.getEtaDate())
-								.itemSeq(detailVo.getItemSeq())
-								.itemName(detailVo.getItemName())
-								.itemPrice(detailVo.getItemPrice())
-								.itemQty(detailVo.getItemQty())
-								.itemColor(detailVo.getItemColor())
-								.build();
-						count++;
-					}
+			while (count < detailVoList.size()) {
+				DetailVo detailVo = detailVoList.get(count);
+				if (headerVo.getOrderNum() != detailVo.getOrderNum()) {
+					detailCursor = count;
+					break;
+				} else {
+					joinVo = JoinVo.builder().orderNum(headerVo.getOrderNum()).orderId(headerVo.getOrderId())
+							.orderDate(headerVo.getOrderDate()).orderPrice(headerVo.getOrderPrice())
+							.orderQty(headerVo.getOrderQty()).receiverNo(headerVo.getReceiverNo())
+							.receiverName(headerVo.getReceiverName()).destination(headerVo.getDestination())
+							.desciption(headerVo.getDesciption()).etaDate(headerVo.getEtaDate())
+							.itemSeq(detailVo.getItemSeq()).itemName(detailVo.getItemName())
+							.itemPrice(detailVo.getItemPrice()).itemQty(detailVo.getItemQty())
+							.itemColor(detailVo.getItemColor()).build();
+					count++;
+				}
 				this.joinVoList.add(joinVo);
 			}
 		}
 	}
-	
-	public void deserializationJsonData(){
-		//TODO
+
+	public RecordVo deserializationJsonData() throws JsonMappingException, JsonProcessingException {
+		return this.objectMapper.readValue(this.jsonData, RecordVo.class);
 	}
-	//원래는 jaxb를 이용하여 header 와 detail vo에 따로 담은 후 join 한 vo 에 매핑을 하려고 했으나 map을 통해 xml을 핸들링하고 한번에 joinvo로
-	//변환하는 거
+
+	public String getSql(String sqlId) throws ParserConfigurationException, SAXException, IOException {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+
+		Document document = builder.parse("src/main/resource/sql/xmlData_SQL.xml");// 이거 설명해야됨 (xml 파일말고 문자열 자체를
+
+		Element root = document.getDocumentElement();// root 요소 가져오기
+		NodeList rootNodeList = root.getChildNodes();// root 요소 확인 : 첫 태그 sql
+		for (int i = 0; i < rootNodeList.getLength(); i++) {
+			//공백이 아닐 경우
+			if (rootNodeList.item(i).getNodeType() == Node.ELEMENT_NODE) {
+				Element sqlElement = (Element) rootNodeList.item(i);
+				if ((sqlId.equals(sqlElement.getAttribute("id")))) {
+					return sqlElement.getTextContent();
+				} 
+			}
+		}
+		return null;
+	}
+	// 원래는 jaxb를 이용하여 header 와 detail vo에 따로 담은 후 join 한 vo 에 매핑을 하려고 했으나 map을 통해
+	// xml을 핸들링하고 한번에 joinvo로
+	// 변환하는 거
 //	public void deserializationXmlData() throws ParserConfigurationException, SAXException, IOException {
 //		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 //		DocumentBuilder builder = factory.newDocumentBuilder();
@@ -120,8 +145,8 @@ public class DataHandler {
 //		
 //		Element root = document.getDocumentElement();// root 요소 가져오기
 //		NodeList purchaseOrder = root.getChildNodes();// root 요소 확인 : 첫 태그 PurchaseOrder
-////		Node firstNode = root.getFirstChild();// root 요소의 첫번째 노드는 #Text >> 빈 공백
-////		Node tableName = firstNode.getNextSibling();// 다음 노드는 HEADER, DETAIL
+//		Node firstNode = root.getFirstChild();// root 요소의 첫번째 노드는 #Text >> 빈 공백
+//		Node tableName = firstNode.getNextSibling();// 다음 노드는 HEADER, DETAIL
 //
 //		//데이터 타입에 따라 다르게 VO 에 넣는게 구현이 너무 어렵고 비 효율적이라고 생각해서 일단 List Map으로 변환함
 //		

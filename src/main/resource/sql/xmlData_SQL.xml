@@ -1,11 +1,38 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <sql>
-	<insert>
+	<query id="insertXmlData">
 		INSERT 
 			INTO INSPIEN_XMLDATA_INFO 
-				(ORDER_NUM, ITEM_SEQ, ORDER_ID, ORDER_DATE, ORDER_PRICE,
-			ORDER_QTY, RECEIVER_NAME, RECEIVER_NO, ETA_DATE, DESCIPTION ,DESTINATION
-			,ITEM_NAME, ITEM_QTY, ITEM_COLOR, ITEM_PRICE, SENDER)
+			(
+				ORDER_NUM
+				, ITEM_SEQ
+				, ORDER_ID
+				, ORDER_DATE
+				, ORDER_PRICE
+				, ORDER_QTY
+				, RECEIVER_NAME
+				, RECEIVER_NO
+				, ETA_DATE
+				, DESCIPTION
+				, DESTINATION
+				, ITEM_NAME
+				, ITEM_QTY
+				, ITEM_COLOR
+				, ITEM_PRICE
+				, SENDER
+			)
 			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '김도현')
-	</insert>
+	</query>
+	
+	<query id="selectXmlData">
+		SELECT *
+		FROM
+			(
+				SELECT * 
+				FROM INSPIEN_XMLDATA_INFO 
+				WHERE SENDER = '김도현' 
+				ORDER BY CURRENT_DT DESC
+			)
+		WHERE ROWNUM &lt;= ?
+	</query>
 </sql>
