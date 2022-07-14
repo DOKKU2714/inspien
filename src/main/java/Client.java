@@ -54,12 +54,14 @@ public class Client {
 			dataHandler.setJsonData(jsonRequestData);
 			
 			dataHandler.deserializationXmlData();
+			System.out.println(dataHandler.deserializationJsonData());
+			
 			
 			System.out.println(dataHandler.getJoinVoList());
 			System.out.println(dataHandler.getJoinVoList().size());
-			DAO dao = new DAO();
-			dao.insert(dataHandler.getJoinVoList(), insertQuery);
-			dao.select(selectQuery);
+//			DAO dao = new DAO();
+//			dao.insert(dataHandler.getJoinVoList(), insertQuery);
+//			dao.select(selectQuery);
 			
 			FTPController ftpc = new FTPController();
 			ftpc.go(jsonRequestData);

@@ -1,9 +1,9 @@
 package inspien;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.SocketException;
 
 import org.apache.commons.net.ftp.FTP;
@@ -56,19 +56,21 @@ public class FTPController {
 	
 	public void go(String jsonData) throws SocketException, IOException {
 		////////////////////////////
-		FTPClient ftpClient = new FTPClient();
-		ftpClient.setControlEncoding("UTF-8");
-		ftpClient.connect("", 1000);
-		
-		ftpClient.login("", "");
-		ftpClient.enterLocalPassiveMode();
-		ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+//		FTPClient ftpClient = new FTPClient();
+//		ftpClient.setControlEncoding("UTF-8");
+//		ftpClient.connect("", 1000);
+//		
+//		ftpClient.login("", "");
+//		ftpClient.enterLocalPassiveMode();
+//		ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
 		DataHandler dh = new DataHandler();
-		RecordVo recordVo = dh.deserializationJsonData();
+//		RecordVo recordVo = dh.deserializationJsonData();
 		File file = new File("C:\test.txt");
 		file.createNewFile();
+		PrintWriter pw = new PrintWriter(file, "UTF-8");
+		pw.println(jsonData);
 		try {
-			boolean isSuccess = ftpClient.storeFile("INSPIEN_JSON_김도현_20220714121212.txt", new FileInputStream(file));
+//			boolean isSuccess = ftpClient.storeFile("INSPIEN_JSON_김도현_20220714121212.txt", new FileInputStream(file));
 		} catch (Exception e) {
 		e.printStackTrace();
 		}

@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -21,13 +22,13 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inspien.vo.DetailVo;
 import inspien.vo.HeaderVo;
 import inspien.vo.JoinVo;
-import inspien.vo.RecordVo;
 import inspien.vo.RequestDataVo;
 import inspien.vo.xmlWrapper.DetailVoXmlWrapper;
 import inspien.vo.xmlWrapper.HeaderVoXmlWrapper;
@@ -111,8 +112,8 @@ public class DataHandler {
 		}
 	}
 
-	public RecordVo deserializationJsonData() throws JsonMappingException, JsonProcessingException {
-		return this.objectMapper.readValue(this.jsonData, RecordVo.class);
+	public Map<String, Object> deserializationJsonData() throws JsonMappingException, JsonProcessingException {
+		return this.objectMapper.readValue(this.jsonData, new TypeReference<Map<String, Object>>(){});
 	}
 
 	public String getSql(String sqlId) throws ParserConfigurationException, SAXException, IOException {
