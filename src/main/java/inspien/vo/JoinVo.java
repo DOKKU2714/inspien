@@ -5,7 +5,6 @@ import java.util.Map;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
-import javax.xml.bind.annotation.XmlElement;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,23 +20,20 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @XmlAccessorType(XmlAccessType.FIELD)
-public class DetailVo {
-	@XmlElement(name = "ORDER_NUM")
+public class JoinVo {
 	private int orderNum;
-	
-	@XmlElement(name = "ITEM_SEQ")
+	private String orderId;
+	private LocalDate orderDate;
+	private int orderPrice;
+	private int orderQty;
+	private String receiverName;
+	private String receiverNo;
+	private LocalDate etaDate;
+	private String destination;
+	private String desciption;
 	private int itemSeq;
-	
-	@XmlElement(name = "ITEM_NAME")
 	private String itemName;
-	
-	@XmlElement(name = "ITEM_QTY")
 	private int itemQty;
-	
-	@XmlElement(name = "ITEM_COLOR")
 	private String itemColor;
-	
-	@XmlElement(name = "ITEM_PRICE")
 	private int itemPrice;
 }
-

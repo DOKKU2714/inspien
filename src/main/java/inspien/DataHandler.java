@@ -2,10 +2,9 @@ package inspien;
 
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -16,53 +15,31 @@ import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inspien.vo.DetailVo;
-import inspien.vo.DetailVoXmlWrapper;
 import inspien.vo.HeaderVo;
-import inspien.vo.HeaderVoXmlWrapper;
+import inspien.vo.JoinVo;
 import inspien.vo.RequestDataVo;
+import inspien.vo.xmlWrapper.DetailVoXmlWrapper;
+import inspien.vo.xmlWrapper.HeaderVoXmlWrapper;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class DataHandler {
 	private String xmlData;
 	private String jsonData;
 	
-	private List<HeaderVo> headerVoList;
-	private List<DetailVo> detailVoList;
+	private List<HeaderVo> headerVoList = new ArrayList<>();
+	private List<DetailVo> detailVoList = new ArrayList<>();
+	private List<JoinVo> joinVoList = new ArrayList<>();
 	
 	// 생성 비용이 비쌈
 	private ObjectMapper objectMapper = new ObjectMapper();
 	
-	public String getXmlData() {
-		return xmlData;
-	}
-
-	public void setXmlData(String xmlData) {
-		this.xmlData = xmlData;
-	}
-
-	public String getJsonData() {
-		return jsonData;
-	}
-
-	public void setJsonData(String jsonData) {
-		this.jsonData = jsonData;
-	}
-
-	public List<HeaderVo> getHeaderVoList() {
-		return headerVoList;
-	}
-
-	public void setHeaderVoList(List<HeaderVo> headerVoList) {
-		this.headerVoList = headerVoList;
-	}
-
-	public List<DetailVo> getDetailVoList() {
-		return detailVoList;
-	}
-
-	public void setDetailVoList(List<DetailVo> detailVoList) {
-		this.detailVoList = detailVoList;
-	}
-
 	public RequestDataVo handlingRequestData(String data) throws JsonMappingException, JsonProcessingException {
 		return this.objectMapper.readValue(data, RequestDataVo.class);
 	}
@@ -83,7 +60,7 @@ public class DataHandler {
 //		   return sb.toString();
 //	}
 
-	//jaxb 를 이용한 xml 파싱 후 VO 객체에 삽입
+	//jaxb 를 이용한 xml 파싱 후 각각의 VO 객체에 삽입
 	public void deserializationXmlData() throws JAXBException {
 		JAXBContext jaxbContext = JAXBContext.newInstance(HeaderVoXmlWrapper.class);
 		Unmarshaller unmarshaller = jaxbContext.createUnmarshaller();
@@ -92,20 +69,54 @@ public class DataHandler {
 		jaxbContext = JAXBContext.newInstance(DetailVoXmlWrapper.class); //XML 파싱을 위한 JAXBContext 객체 생성
 		unmarshaller = jaxbContext.createUnmarshaller(); // Unmarshaller 객체 생성
 		this.detailVoList = ((DetailVoXmlWrapper) unmarshaller.unmarshal(new StringReader(this.xmlData))).getDetailVoList(); //unmarshal 후 반환된 리스트
+		
+		//headerVo 와 detailVo 에서 orderNum 이같은 것들끼리 left join 하여 joinVo 에 매핑
+		int detailCursor = 0;
+		int count = 0;
+		for (int i = 0 ; i < this.headerVoList.size() ; i++) {
+			HeaderVo headerVo = this.headerVoList.get(i);
+			JoinVo joinVo = null;
+			count = detailCursor;
+				while (count < detailVoList.size()) {
+					DetailVo detailVo = detailVoList.get(count);
+					if (headerVo.getOrderNum() != detailVo.getOrderNum()) {
+						detailCursor = count;
+						break;
+					} else {
+						joinVo = JoinVo.builder()
+								.orderNum(headerVo.getOrderNum())
+								.orderId(headerVo.getOrderId())
+								.orderDate(headerVo.getOrderDate())
+								.orderPrice(headerVo.getOrderPrice())
+								.orderQty(headerVo.getOrderQty())
+								.receiverNo(headerVo.getReceiverNo())
+								.receiverName(headerVo.getReceiverName())
+								.destination(headerVo.getDestination())
+								.desciption(headerVo.getDesciption())
+								.etaDate(headerVo.getEtaDate())
+								.itemSeq(detailVo.getItemSeq())
+								.itemName(detailVo.getItemName())
+								.itemPrice(detailVo.getItemPrice())
+								.itemQty(detailVo.getItemQty())
+								.itemColor(detailVo.getItemColor())
+								.build();
+						count++;
+					}
+				this.joinVoList.add(joinVo);
+			}
+		}
 	}
 	
 	public void deserializationJsonData(){
 		//TODO
 	}
-	
-//	public void deserializationXmlData(String xmlData) throws ParserConfigurationException, SAXException, IOException {
+	//원래는 jaxb를 이용하여 header 와 detail vo에 따로 담은 후 join 한 vo 에 매핑을 하려고 했으나 map을 통해 xml을 핸들링하고 한번에 joinvo로
+	//변환하는 거
+//	public void deserializationXmlData() throws ParserConfigurationException, SAXException, IOException {
 //		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 //		DocumentBuilder builder = factory.newDocumentBuilder();
-//
-//		List<HeaderVo> headerVoList = new ArrayList<>();
-//		List<DetailVo> detailVoList = new ArrayList<>();
 //		
-//		Document document = builder.parse(new InputSource(new StringReader(xmlData)));// 이거 설명해야됨 (xml 파일말고 문자열 자체를
+//		Document document = builder.parse(new InputSource(new StringReader(this.xmlData)));// 이거 설명해야됨 (xml 파일말고 문자열 자체를
 //		
 //		Element root = document.getDocumentElement();// root 요소 가져오기
 //		NodeList purchaseOrder = root.getChildNodes();// root 요소 확인 : 첫 태그 PurchaseOrder
@@ -114,10 +125,13 @@ public class DataHandler {
 //
 //		//데이터 타입에 따라 다르게 VO 에 넣는게 구현이 너무 어렵고 비 효율적이라고 생각해서 일단 List Map으로 변환함
 //		
+//		List<Map<String,String>> headerList = new ArrayList<>();
+//		List<Map<String,String>> detailList = new ArrayList<>();
+//		
 //		for (int i = 0; i < purchaseOrder.getLength(); i++) {
-////			Map<String, String> columns = new HashMap<>();
-//			HeaderVo headerVo = new HeaderVo();
-//			DetailVo detailVo = new DetailVo();
+//			Map<String, String> columns = new HashMap<>();
+//			Map<String, String> headerCol = new HashMap<>();
+//			Map<String, String> detailCol = new HashMap<>();
 //			Element rowElement = (Element) purchaseOrder.item(i); // 루트 노드의 자식 노드들 중 하나씩 element로 설정
 //			NodeList rowNodeList = rowElement.getChildNodes(); //각각의 element에서 하위 노드 리스트를 뽑음
 //			
@@ -125,66 +139,13 @@ public class DataHandler {
 //				Element columnElement = (Element) rowNodeList.item(j); // <HEADER>의 하위 요소들
 //				String rowName = rowElement.getNodeName();
 //				if ("HEADER".equals(rowName)) {
-//					switch (columnElement.getNodeName()) {
-//						case "ORDER_NUM":
-//							headerVo.setOrderNum(Integer.parseInt(columnElement.getTextContent()));
-//							break;
-//						case "ORDER_ID":
-//							headerVo.setOrderId(columnElement.getTextContent());
-//							break;
-//						case "ORDER_DATE":
-//							headerVo.setOrderDate(LocalDate.parse(columnElement.getTextContent(), DateTimeFormatter.ISO_DATE)) ;
-//							break;
-//						case "ORDER_PRICE":
-//							headerVo.setOrderPrice(Integer.parseInt(columnElement.getTextContent()));
-//							break;
-//						case "ORDER_QTY":
-//							headerVo.setOrderQty(Integer.parseInt(columnElement.getTextContent()));
-//							break;
-//						case "RECEIVER_NAME":
-//							headerVo.setReceiverName(columnElement.getTextContent());
-//							break;
-//						case "RECEIVER_NO":
-//							headerVo.setReceiverNo(columnElement.getTextContent());
-//							break;
-//						case "ETA_DATE":
-//							headerVo.setEtaDate(LocalDate.parse(columnElement.getTextContent(), DateTimeFormatter.ISO_DATE));
-//							break;
-//						case "DESTINATION":
-//							headerVo.setDestination(columnElement.getTextContent());
-//							break;
-//						case "DESCIPTION":
-//							headerVo.setDesciption(columnElement.getTextContent());
-//							break;
-//						default:
-//							break;
-//					}
-//				} else if ("DETAIL".equals(rowName)){
-//					switch (columnElement.getNodeName()) {
-//						case "ORDER_NUM":
-//							detailVo.setOrderNum(Integer.parseInt(columnElement.getTextContent()));
-//							System.out.println(columnElement.getTextContent());
-//							break;
-//						case "ITEM_SEQ":
-//							detailVo.setItemSeq(Integer.parseInt(columnElement.getTextContent()));
-//							break;
-//						case "ITEM_NAME":
-//							detailVo.setItemName(columnElement.getTextContent());
-//							break;
-//						case "ITEM_QTY":
-//							detailVo.setItemQty(Integer.parseInt(columnElement.getTextContent()));
-//							break;
-//						case "ITEM_COLOR":
-//							detailVo.setItemColor(columnElement.getTextContent());
-//							break;
-//						case "ITEM_PRICE":
-//							detailVo.setItemPrice(Integer.parseInt(columnElement.getTextContent()));
-//							break;
-//						default:
-//							break;
-//					}
+//					headerCol.put(columnElement.getNodeName(), columnElement.getTextContent());
+//				} else if ("DETAIL".equals(rowName)) {
+//					detailCol.put(columnElement.getNodeName(), columnElement.getTextContent());
 //				}
+////				columns.put(columnElement.getNodeName(), columnElement.getTextContent());
 //			}
+//			this.dataList.add(columns);
 //		}
 //	}
 }

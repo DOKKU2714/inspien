@@ -46,12 +46,12 @@ public class Client {
 			
 			dataHandler.deserializationXmlData();
 			
-			System.out.println(dataHandler.getHeaderVoList().size());
-			System.out.println(dataHandler.getDetailVoList().size());
+			System.out.println(dataHandler.getJoinVoList());
+			System.out.println(dataHandler.getJoinVoList().size());
 			
 			DAO dao = new DAO();
+			dao.insert(dataHandler.getJoinVoList());
 			dao.select();
-			//가져온 requestDataVo 에서 db정보를 불러와서 DAO에 세팅하도록 하고 DB insert 한 뒤 select로 오늘 날짜로 넣은거 확인하기
 			
 			// DataHandler 객체에서 deserializationJsonData메소드로 jsonData VO 자료구조로 만들고 (그 전에 VO 를 패키지로 XML 과 JSON 으로 나누자)
 			

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sql>
+	<insert>
+		INSERT 
+			INTO INSPIEN_XMLDATA_INFO 
+				(ORDER_NUM, ITEM_SEQ, ORDER_ID, ORDER_DATE, ORDER_PRICE,
+			ORDER_QTY, RECEIVER_NAME, RECEIVER_NO, ETA_DATE, DESCIPTION ,DESTINATION
+			,ITEM_NAME, ITEM_QTY, ITEM_COLOR, ITEM_PRICE, SENDER)
+			VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '김도현')
+	</insert>
+</sql>
