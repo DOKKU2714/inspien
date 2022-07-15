@@ -1,8 +1,5 @@
-import java.io.FileReader;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,67 +8,70 @@ import inspien.DAO;
 import inspien.DataHandler;
 import inspien.FTPController;
 import inspien.Requester;
+import inspien.vo.ConnectionInfoVo;
+import inspien.vo.JoinVo;
 import inspien.vo.RecordVo;
-import inspien.vo.RequestDataVo;
 
 public class Client {
-	//입력 값을 그냥 map 말고 문자열로 바로 json으로 쏘게 하자 (굳이 jackson으로 하지 말자)
 	public static void main(String[] args) {
 		try {
-			String resource = "setting.properties";
-			Properties properties = new Properties();
-			FileReader fileReader = new FileReader(resource);
+			/*URL 요청*/
+			Requester requester = new Requester();
+			requester.request();
+			requester.setConnectionInfoText();
 			
-			properties.load(fileReader);
-			
-			//자바 9버전 이상부터 사용 가능한 Map.of 형태로 선언
-			Map<String, String> info = new HashMap<>();
-			info.put("NAME", properties.getProperty("client.name"));
-			info.put("PHONE_NUMBER", properties.getProperty("client.phoneNumber"));
-			info.put("E_MAIL", properties.getProperty("client.eMail"));
-			
-			ObjectMapper objectMapper = new ObjectMapper();	//jackson 의 클래스로 생성비용이 비쌈
-			
-			String jsonInputData = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(info);	//json형태의 문자열로 변환
-			
-			Requester requester = new Requester(properties.getProperty("client.requestURL"), jsonInputData);
-			String responseData = requester.getRequestData(); //가져온 
-
+			/*접속 정보를 VO 로 변환*/
 			DataHandler dataHandler = new DataHandler();
-			RequestDataVo requestDataVo = dataHandler.handlingRequestData(responseData);
-
-			String insertQuery = dataHandler.getSql("insertXmlData");
-			String selectQuery = dataHandler.getSql("selectXmlData");
+			ConnectionInfoVo connectionInfoVo = dataHandler.connectionInfoTextToVo(requester.getConnectionInfoText());
 			
-			String xmlRequestData = dataHandler.dataDecoding(requestDataVo.getXmlData(), "euc-kr");
-			String jsonRequestData = dataHandler.dataDecoding(requestDataVo.getJsonData(), "utf-8");
+			/*접속정보 VO 의 JSON, XML 데이터를 디코딩 후 contentType 변경*/
+			String decodedXmlText = dataHandler.dataDecoding(connectionInfoVo.getXmlData(), "euc-kr");
+			String decodedJsonText = dataHandler.dataDecoding(connectionInfoVo.getJsonData(), "utf-8");
 			
-			dataHandler.setXmlData(xmlRequestData);
-			dataHandler.setJsonData(jsonRequestData);
+			/*디코딩 한 xml 데이터를 List<VO> 형태로 변환*/
+			List<JoinVo> joinVoList = dataHandler.xmlTextToVoList(decodedXmlText);
 			
-			dataHandler.deserializationXmlData();
+			/*db conntion 정보를 Map<String, String> 형태로 가져옴*/
+			Map<String, String> dbConnectionInfoMap = connectionInfoVo.getDbConnInfo();
 			
-//			System.out.println(jsonRequestData);
+			/*db접속정보 를 매핑하고 객체 생성*/
+			DAO dao = DAO.builder()
+					//jdbc:oracle:thin:@211.106.171.36:11527:POS
+					.dbUrl("jdbc:oracle:thin:@"+dbConnectionInfoMap.get("HOST") + ":"
+								+dbConnectionInfoMap.get("PORT") + ":"
+								+dbConnectionInfoMap.get("SID"))
+					.dbId(dbConnectionInfoMap.get("USER"))
+					.dbPw(dbConnectionInfoMap.get("PASSWORD"))
+					.build();
 			
-//			DataHandler.convertToVOList(dataHandler.deserializationJsonData(), RecordVo.class);
+			/*쿼리를 xml파일에서 읽어옴*/
+			String insertQuery = dao.getQuery("insertXmlData");
+			String selectQuery = dao.getQuery("selectXmlData");
 			
-//			System.out.println(dataHandler.getJoinVoList());
-//			System.out.println(dataHandler.getJoinVoList().size());
-			DAO dao = new DAO();
-			dao.insert(dataHandler.getJoinVoList(), insertQuery);
+			/*쿼리 실행 (insert, select)*/
+			dao.insert(joinVoList, insertQuery);
 			dao.select(selectQuery);
 			
-			JsonNode jsonNode = objectMapper.readTree(jsonRequestData);
-			dataHandler.setJsonData(jsonNode.get("record").toString()); //record 라는 start Object 때문에 바로 vo로 변하질 않기 때문에 record의 내부 데이터를 따로 가져와서 vo로 변환
-			List<RecordVo> list = dataHandler.deserializationJsonData();
+			/*text 형태의 디코딩된 json 데이터를 tree형태로 읽어서 jsonNode 객체로 변환*/
+			JsonNode jsonNode = new ObjectMapper().readTree(decodedJsonText);
+			/*record 라는 object 때문에 바로 List<VO>형태로 변환이 불가능하여 record의 내부 데이터를 따로 빼낸 후 List<Vo> 형태로 변환함*/
+			List<RecordVo> recordVoList = dataHandler.jsonTextToVoList(jsonNode.get("record").toString());
+			/*List<Vo> 형태로 빼낸 json 을 다시 문자열 형태로 변환*/
+			String recordText = dataHandler.recordVoListToText(recordVoList);
 			
-			System.out.println(list.size());
-			
-			FTPController ftpc = new FTPController();
-			ftpc.go(dataHandler.recordVoListToText(list));
-			// DataHandler 객체에서 deserializationJsonData메소드로 jsonData VO 자료구조로 만들고 (그 전에 VO 를 패키지로 XML 과 JSON 으로 나누자)
-			
-			//ftp 파일 전송
+			/*처음 request 이후 생성된 connectionInfo 객체를 통해 ftp 접속정보를 가져옴*/
+			Map<String, String> ftpConnectionInfoMap = connectionInfoVo.getFtpConnInfo();
+			/*ftp 접속정보 매핑*/
+			FTPController ftpController = FTPController.builder()
+					.ip(ftpConnectionInfoMap.get("HOST"))
+					.port(Integer.parseInt(ftpConnectionInfoMap.get("PORT")))
+					.id(ftpConnectionInfoMap.get("USER"))
+					.pw(ftpConnectionInfoMap.get("PASSWORD"))
+					.build();
+			/*연결 후 로그인*/
+			ftpController.connectAndLogin();
+			/*문자열 형태의 json 데이터(record라는 start object)를 이용해 ftp 파일 서버로 파일 전송*/
+			ftpController.sendFile(recordText, ftpConnectionInfoMap.get("FILE_PATH"));
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

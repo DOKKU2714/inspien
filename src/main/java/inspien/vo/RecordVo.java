@@ -18,6 +18,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @ToString
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
+/*서비스 호출 후 전달받은 json 데이터를 핸들링 후 매핑되는 VO 형태의 클래스*/
 public class RecordVo {
 	private String names;
 	private String phone;

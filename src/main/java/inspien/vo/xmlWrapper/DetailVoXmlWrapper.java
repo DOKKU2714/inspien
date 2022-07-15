@@ -23,6 +23,7 @@ import lombok.ToString;
 @AllArgsConstructor
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "PurchaseOrder")
+/*제공받은 XML 데이터 중 DETAIL 데이터를 jaxb라는 라이브러리로 자동 매핑하는데 있어서 Lisst<Vo> 형태로 매핑하기 위한 클래스*/
 public class DetailVoXmlWrapper {
 	@XmlElement(name = "DETAIL")
 	private List<DetailVo> detailVoList;

@@ -1,48 +1,64 @@
 package inspien;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Properties;
 
+import lombok.Getter;
+
+@Getter
+/*맨 처음 작동하는 서비스 호출 관련 클래스*/
 public class Requester {
-    private String requestURL;
-    private String inputData;
+	private HttpURLConnection httpUrlConnection;
+    private String connectionInfoText;
+    private String body;
   
-    public Requester(){}
-    
-    public Requester(String requestURL, String inputData) {
-        this.requestURL = requestURL;
-        this.inputData = inputData;
+    /*생성자를 통해 http Header 설정 및 properties 파일에서 데이터를 가져와 body를 바로 초기화*/
+    public Requester() throws IOException {
+    	URL url = new URL(readFromProperties("client.requestURL"));
+    	
+    	this.httpUrlConnection = (HttpURLConnection)url.openConnection();
+    	this.httpUrlConnection.setRequestMethod("POST");
+    	this.httpUrlConnection.setConnectTimeout(1000 * 60);	
+    	this.httpUrlConnection.setReadTimeout(1000 * 60);
+    	this.httpUrlConnection.setRequestProperty("Content-type", "application/json;utf-8");
+    	this.httpUrlConnection.setRequestProperty("Accept", "application/json;");
+    	this.httpUrlConnection.setDoOutput(true);	
+		
+		String name = readFromProperties("client.name");
+		String phoneNumber = readFromProperties("client.phoneNumber");
+		String eMail = readFromProperties("client.eMail");
+		
+		this.body = ""
+				+ "{"
+				+ "\"NAME\": \""+name+"\","
+				+ "\"PHONE_NUMBER\": \""+phoneNumber+"\","
+				+ "\"E_MAIL\": \""+eMail+"\""
+				+ "}";
     }
     
-    public String getRequestData() throws IOException {
-        URL url = new URL(this.requestURL); //url 객체를 요청을 보낼 url 을 통해 생성
-		HttpURLConnection httpUrlConnection = (HttpURLConnection)url.openConnection();//httpUrlConnection 객체를 가져옴
-		httpUrlConnection.setRequestMethod("POST");	//http method 설정
-		httpUrlConnection.setConnectTimeout(1000 * 1000);	
-		httpUrlConnection.setReadTimeout(1000 * 500);
-		httpUrlConnection.setRequestProperty("Content-type", "application/json;utf-8");	//http request message 의 헤더 설정
-		httpUrlConnection.setRequestProperty("Accept", "application/json;");
-		httpUrlConnection.setDoOutput(true);	
-		
-		//try-catch-finally 가 아니라서 writer close 를 안해도 되는 try-with-resources 방식을 사용
-		try (PrintWriter printWriter = new PrintWriter(	//printWriter 객체를  connection 객체를통해 outputstream을 가져와 json 데이터를 쏨
-				httpUrlConnection.getOutputStream())) {
-			printWriter.print(inputData);
+    public void request() throws IOException {
+		/*try-catch-finally 가 아니라서 자원 close 를 자동으로 해주는 try-with-resources 방식을 사용*/
+		try (PrintWriter printWriter = new PrintWriter(httpUrlConnection.getOutputStream())) {
+			printWriter.print(this.body);
 			printWriter.flush();
 		}    
-        
-	    String readLine = null; //json 데이터를 넣을 변수
-		StringBuilder buffer = null; //readLine 변수를 통해 한 줄씩 읽은 데이터를 넣을 버퍼
-		buffer = new StringBuilder();
+    }
+    /*request 후 response를 통해 응답받은 연결정보 데이터를 set*/
+    public void setConnectionInfoText() throws UnsupportedEncodingException, IOException {
+	    String readLine = null;
+		StringBuilder buffer = new StringBuilder();
 		
 		try(BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(
-				httpUrlConnection.getInputStream(), "UTF-8"))) {
+				this.httpUrlConnection.getInputStream(), "UTF-8"))) {
 			
-			if(httpUrlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) { //응답 코드가 200일 경우
+			if(this.httpUrlConnection.getResponseCode() == HttpURLConnection.HTTP_OK) {
 	
 				while((readLine = bufferedReader.readLine()) != null) {
 					buffer.append(readLine)
@@ -50,13 +66,22 @@ public class Requester {
 				}
 			} else {
 				buffer.append("code : ")
-						.append(httpUrlConnection.getResponseCode())
+						.append(this.httpUrlConnection.getResponseCode())
 						.append("\n\n")
 						.append("message : ")
-						.append(httpUrlConnection.getResponseMessage())
+						.append(this.httpUrlConnection.getResponseMessage())
 						.append("\n\n");
 			}
 		}
-		return buffer.toString();
+		this.connectionInfoText = buffer.toString();
+    }
+    
+    private String readFromProperties(String id) throws IOException {
+		String resource = "src/main/resource/properties/requestInfo.properties";
+		Properties properties = new Properties();
+		FileReader fileReader = new FileReader(resource);
+		properties.load(fileReader);
+		
+		return properties.getProperty(id);
     }
 }

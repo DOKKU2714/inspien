@@ -1,5 +1,6 @@
 package inspien;
 
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -7,10 +8,24 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
+import org.xml.sax.SAXException;
+
 import inspien.vo.JoinVo;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 
-
+@Builder
+/*DB접근을 위한 클래스*/
 public class DAO {
+	/*드라이버 실행*/
 	static {
 		try {
 			Class.forName("oracle.jdbc.driver.OracleDriver");
@@ -18,53 +33,20 @@ public class DAO {
 			e.printStackTrace();
 		}
 	}
-	private String dbUrl = "jdbc:oracle:thin:@211.106.171.36:11527:POS";
-	private String dbId = "inspien01";
-	private String dbPw = "inspien01";
-//    private String sql;
-//	private String insertSql = "INSERT INTO INSPIEN_XMLDATA_INFO "
-//			+ "(ORDER_NUM, ITEM_SEQ, ORDER_ID, ORDER_DATE, ORDER_PRICE,"
-//			+ "ORDER_QTY, RECEIVER_NAME, RECEIVER_NO, ETA_DATE, DESCIPTION ,DESTINATION "
-//			+ ",ITEM_NAME, ITEM_QTY, ITEM_COLOR, ITEM_PRICE, SENDER)"
-//			+ "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, '김도현')";
-//
-//	String selectSql = "SELECT * FROM " + "(SELECT * FROM INSPIEN_XMLDATA_INFO " + "WHERE SENDER = '김도현'"
-//			+ "ORDER BY CURRENT_DT DESC) " + "WHERE ROWNUM <= 200";
-//
-//	String tableInfoSql = "SELECT A.COLUMN_ID AS NO" + ", B.COMMENTS AS \"논리명\"" + ", A.COLUMN_NAME AS \"물리명\""
-//			+ ", A.DATA_TYPE AS \"자료 형태\"" + ", A.DATA_LENGTH AS \"길이\""
-//			+ ", DECODE(A.NULLABLE, 'N', 'No', 'Y', 'Yes') AS \"Null 허용\"" + ", '' AS \"식별자\""
-//			+ ", A.DATA_DEFAULT AS \"기본값\"" + ", B.COMMENTS AS \"코멘트\"" + "FROM  ALL_TAB_COLUMNS A " + "LEFT JOIN "
-//			+ "ALL_COL_COMMENTS B " + "ON A.OWNER = B.OWNER " + "AND A.TABLE_NAME = B.TABLE_NAME "
-//			+ "AND A.COLUMN_NAME = B.COLUMN_NAME " + "WHERE A.TABLE_NAME LIKE " + "'INSPIEN_XMLDATA_INFO' "
-//			+ "ORDER BY A.COLUMN_ID";
-//
-//	String deleteSql = "DELETE FROM INSPIEN_XMLDATA_INFO " + "WHERE SENDER = '김도현'";
+	private String dbUrl;
+	private String dbId;
+	private String dbPw;
 
+	/*데이터를 제대로 넣었는지 확인하기 위한 select 쿼리 실행해주는 메소드*/
 	public void select(String sql) throws ClassNotFoundException {
 
 		try (Connection connection = DriverManager.getConnection(dbUrl, dbId, dbPw);
 				PreparedStatement preparedStatement = connection.prepareStatement(sql);
 				ResultSet resultSet = preparedStatement.executeQuery();) {
-			System.out.println(resultSet);
 			while (resultSet.next()) {
-				System.out.println(resultSet.getString(1));
-				System.out.println(resultSet.getString(2));
-				System.out.println(resultSet.getString(3));
-				System.out.println(resultSet.getString(4));
-				System.out.println(resultSet.getString(5));
-				System.out.println(resultSet.getString(6));
-				System.out.println(resultSet.getString(7));
-				System.out.println(resultSet.getString(8));
-				System.out.println(resultSet.getString(9));
-				System.out.println(resultSet.getString(10));
-				System.out.println(resultSet.getString(11));
-				System.out.println(resultSet.getString(12));
-				System.out.println(resultSet.getString(13));
-				System.out.println(resultSet.getString(14));
-				System.out.println(resultSet.getString(15));
-				System.out.println(resultSet.getString(16));
-				System.out.println(resultSet.getString(17));
+				for (int i = 1 ; i < 18 ; i++) {
+					System.out.print(resultSet.getString(i)+ "\t|\t");
+				}
 				System.out.println("\n");
 			}
 		} catch (Exception e) {
@@ -72,37 +54,29 @@ public class DAO {
 		}
 	}
 
-	public void delete(String sql) throws ClassNotFoundException {
-		try (Connection connection = DriverManager.getConnection(dbUrl, dbId, dbPw);
-				PreparedStatement preparedStatement = connection.prepareStatement(sql);) {
-			preparedStatement.executeUpdate();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-
+	/*핸들링 한 xml 데이터를 insert 해주는 메소드*/
 	public void insert(List<JoinVo> dataList, String sql) throws ClassNotFoundException, SQLException {
-		Class.forName("oracle.jdbc.driver.OracleDriver"); // 드라이버 실행
 		//try - with -resources 를 사용하면 자동으로 자원을 닫아주지만 try 문에서만 선언을 했기때문에 catch 에서 사용할 수 없어서 한번 더 감쌌다.
 		try (Connection connection = DriverManager.getConnection(dbUrl, dbId, dbPw);) {
 			try (PreparedStatement preparedStatement = connection.prepareStatement(sql);) {
 				connection.setAutoCommit(false);
 				for (int i = 0; i < dataList.size(); i++) {
-					preparedStatement.setString(1, String.valueOf(dataList.get(i).getOrderNum()));
-					preparedStatement.setString(2, String.valueOf(dataList.get(i).getItemSeq()));
-					preparedStatement.setString(3, String.valueOf(dataList.get(i).getOrderId()));
-					preparedStatement.setString(4, String.valueOf(dataList.get(i).getOrderDate()));
-					preparedStatement.setString(5, String.valueOf(dataList.get(i).getOrderPrice()));
-					preparedStatement.setString(6, String.valueOf(dataList.get(i).getOrderQty()));
-					preparedStatement.setString(7, String.valueOf(dataList.get(i).getReceiverName()));
-					preparedStatement.setString(8, String.valueOf(dataList.get(i).getReceiverNo()));
-					preparedStatement.setString(9, String.valueOf(dataList.get(i).getEtaDate()));
-					preparedStatement.setString(10, String.valueOf(dataList.get(i).getDesciption()));
-					preparedStatement.setString(11, String.valueOf(dataList.get(i).getDestination()));
-					preparedStatement.setString(12, String.valueOf(dataList.get(i).getItemName()));
-					preparedStatement.setString(13, String.valueOf(dataList.get(i).getItemQty()));
-					preparedStatement.setString(14, String.valueOf(dataList.get(i).getItemColor()));
-					preparedStatement.setString(15, String.valueOf(dataList.get(i).getItemPrice()));
+					JoinVo joinVo = dataList.get(i);
+					preparedStatement.setString(1, String.valueOf(joinVo.getOrderNum()));
+					preparedStatement.setString(2, String.valueOf(joinVo.getItemSeq()));
+					preparedStatement.setString(3, String.valueOf(joinVo.getOrderId()));
+					preparedStatement.setString(4, String.valueOf(joinVo.getOrderDate()));
+					preparedStatement.setString(5, String.valueOf(joinVo.getOrderPrice()));
+					preparedStatement.setString(6, String.valueOf(joinVo.getOrderQty()));
+					preparedStatement.setString(7, String.valueOf(joinVo.getReceiverName()));
+					preparedStatement.setString(8, String.valueOf(joinVo.getReceiverNo()));
+					preparedStatement.setString(9, String.valueOf(joinVo.getEtaDate()));
+					preparedStatement.setString(10, String.valueOf(joinVo.getDesciption()));
+					preparedStatement.setString(11, String.valueOf(joinVo.getDestination()));
+					preparedStatement.setString(12, String.valueOf(joinVo.getItemName()));
+					preparedStatement.setString(13, String.valueOf(joinVo.getItemQty()));
+					preparedStatement.setString(14, String.valueOf(joinVo.getItemColor()));
+					preparedStatement.setString(15, String.valueOf(joinVo.getItemPrice()));
 					preparedStatement.addBatch();
 					preparedStatement.clearParameters();
 
@@ -120,5 +94,25 @@ public class DAO {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	/*직접 작성한 xmlData_SQL.xml 파일에서 쿼리를 읽어오는 메소드*/
+	public String getQuery(String sqlId) throws ParserConfigurationException, SAXException, IOException {
+		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
+		DocumentBuilder builder = factory.newDocumentBuilder();
+
+		Document document = builder.parse("src/main/resource/sql/xmlData_SQL.xml");
+
+		Element root = document.getDocumentElement();
+		NodeList rootNodeList = root.getChildNodes();
+		for (int i = 0; i < rootNodeList.getLength(); i++) {
+			if (rootNodeList.item(i).getNodeType() == Node.ELEMENT_NODE) {
+				Element sqlElement = (Element) rootNodeList.item(i);
+				if ((sqlId.equals(sqlElement.getAttribute("id")))) {
+					return sqlElement.getTextContent();
+				}
+			}
+		}
+		return null;
 	}
 }

@@ -33,6 +33,6 @@
 				WHERE SENDER = '김도현' 
 				ORDER BY CURRENT_DT DESC
 			)
-		WHERE ROWNUM &lt;= ?
+		WHERE ROWNUM &lt;= 50
 	</query>
 </sql>

@@ -25,6 +25,8 @@ import lombok.ToString;
 @AllArgsConstructor
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlRootElement(name = "HEADER")
+/*제공받은 XML 데이터 중 2개중 HEADER 라는 object 데이터를 매핑하는 VO 형태의 클래스
+ * jaxb 라는 라이브러리를 이용해 자동으로 매핑된다.*/
 public class HeaderVo {
 	@XmlElement(name = "ORDER_NUM")
 	private int orderNum;

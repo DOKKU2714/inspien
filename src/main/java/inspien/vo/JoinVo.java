@@ -20,6 +20,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @XmlAccessorType(XmlAccessType.FIELD)
+/*제공받은 문자열 형태의 XML 데이터 중 header 와 detail 을 합친(left join) 후 매핑되는 VO형태의 클래스*/
 public class JoinVo {
 	private int orderNum;
 	private String orderId;
