@@ -3,10 +3,10 @@ package inspien;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -25,10 +25,12 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.tools.javac.code.Type;
 
 import inspien.vo.DetailVo;
 import inspien.vo.HeaderVo;
 import inspien.vo.JoinVo;
+import inspien.vo.RecordVo;
 import inspien.vo.RequestDataVo;
 import inspien.vo.xmlWrapper.DetailVoXmlWrapper;
 import inspien.vo.xmlWrapper.HeaderVoXmlWrapper;
@@ -111,9 +113,35 @@ public class DataHandler {
 			}
 		}
 	}
-
-	public Map<String, Object> deserializationJsonData() throws JsonMappingException, JsonProcessingException {
-		return this.objectMapper.readValue(this.jsonData, new TypeReference<Map<String, Object>>(){});
+//제네릭 왜 안도
+	public List<RecordVo> deserializationJsonData() throws JsonMappingException, JsonProcessingException {
+		return this.objectMapper.readValue(this.jsonData, new TypeReference<List<RecordVo>>() {});
+	}
+	
+	public String recordVoListToText(List<RecordVo> list) {
+		StringBuilder stringBuilder = new StringBuilder();
+		
+		Field[] fieldArr = RecordVo.class.getDeclaredFields();
+		
+		int fieldCount = fieldArr.length;
+		for (RecordVo vo : list) {
+			stringBuilder.append(vo.getNames()+"^")
+					.append(vo.getPhone()+"^")
+					.append(vo.getEmail()+"^")
+					.append(vo.getBirthDate()+"^")
+					.append(vo.getCompany()+"^")
+					.append(vo.getPersonalNumber()+"^")
+					.append(vo.getCountry()+"^")
+					.append(vo.getRegion()+"^")
+					.append(vo.getCity()+"^")
+					.append(vo.getStreet()+"^")
+					.append(vo.getZipCode()+"^")
+					.append(vo.getCreditCard()+"^")
+					.append(vo.getGuid());
+			stringBuilder.append("\n");
+		}
+		
+		return stringBuilder.toString();
 	}
 
 	public String getSql(String sqlId) throws ParserConfigurationException, SAXException, IOException {
@@ -135,6 +163,7 @@ public class DataHandler {
 		}
 		return null;
 	}
+	
 	// 원래는 jaxb를 이용하여 header 와 detail vo에 따로 담은 후 join 한 vo 에 매핑을 하려고 했으나 map을 통해
 	// xml을 핸들링하고 한번에 joinvo로
 	// 변환하는 거

@@ -1,13 +1,10 @@
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileReader;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
-
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import inspien.DAO;
@@ -46,7 +43,6 @@ public class Client {
 			String insertQuery = dataHandler.getSql("insertXmlData");
 			String selectQuery = dataHandler.getSql("selectXmlData");
 			
-			
 			String xmlRequestData = dataHandler.dataDecoding(requestDataVo.getXmlData(), "euc-kr");
 			String jsonRequestData = dataHandler.dataDecoding(requestDataVo.getJsonData(), "utf-8");
 			
@@ -54,17 +50,25 @@ public class Client {
 			dataHandler.setJsonData(jsonRequestData);
 			
 			dataHandler.deserializationXmlData();
-			System.out.println(dataHandler.deserializationJsonData());
 			
+//			System.out.println(jsonRequestData);
 			
-			System.out.println(dataHandler.getJoinVoList());
-			System.out.println(dataHandler.getJoinVoList().size());
-//			DAO dao = new DAO();
-//			dao.insert(dataHandler.getJoinVoList(), insertQuery);
-//			dao.select(selectQuery);
+//			DataHandler.convertToVOList(dataHandler.deserializationJsonData(), RecordVo.class);
+			
+//			System.out.println(dataHandler.getJoinVoList());
+//			System.out.println(dataHandler.getJoinVoList().size());
+			DAO dao = new DAO();
+			dao.insert(dataHandler.getJoinVoList(), insertQuery);
+			dao.select(selectQuery);
+			
+			JsonNode jsonNode = objectMapper.readTree(jsonRequestData);
+			dataHandler.setJsonData(jsonNode.get("record").toString()); //record 라는 start Object 때문에 바로 vo로 변하질 않기 때문에 record의 내부 데이터를 따로 가져와서 vo로 변환
+			List<RecordVo> list = dataHandler.deserializationJsonData();
+			
+			System.out.println(list.size());
 			
 			FTPController ftpc = new FTPController();
-			ftpc.go(jsonRequestData);
+			ftpc.go(dataHandler.recordVoListToText(list));
 			// DataHandler 객체에서 deserializationJsonData메소드로 jsonData VO 자료구조로 만들고 (그 전에 VO 를 패키지로 XML 과 JSON 으로 나누자)
 			
 			//ftp 파일 전송

@@ -1,16 +1,17 @@
 package inspien;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.SocketException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.apache.commons.net.ftp.FTPReply;
-
-import inspien.vo.RecordVo;
 
 public class FTPController {
 	private FTPClient ftpClient;
@@ -55,28 +56,26 @@ public class FTPController {
 	}
 	
 	public void go(String jsonData) throws SocketException, IOException {
-		////////////////////////////
-//		FTPClient ftpClient = new FTPClient();
-//		ftpClient.setControlEncoding("UTF-8");
-//		ftpClient.connect("", 1000);
-//		
-//		ftpClient.login("", "");
-//		ftpClient.enterLocalPassiveMode();
-//		ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
-		DataHandler dh = new DataHandler();
-//		RecordVo recordVo = dh.deserializationJsonData();
-		File file = new File("C:\test.txt");
-		file.createNewFile();
-		PrintWriter pw = new PrintWriter(file, "UTF-8");
-		pw.println(jsonData);
-		try {
-//			boolean isSuccess = ftpClient.storeFile("INSPIEN_JSON_김도현_20220714121212.txt", new FileInputStream(file));
-		} catch (Exception e) {
-		e.printStackTrace();
-		}
+		FTPClient ftpClient = new FTPClient();
+		ftpClient.setControlEncoding("UTF-8");
+		ftpClient.connect("211.106.171.36", 20421);
 		
+		ftpClient.login("inspien01", "inspien01");
+		ftpClient.enterLocalPassiveMode();
+		ftpClient.setFileType(FTP.BINARY_FILE_TYPE);
+		
+		String now = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
+		File file = new File("C:\\Users\\forkb\\Desktop\\INSPIEN_JSON_[김도현]_["+now+"].txt");
+		PrintWriter pw = new PrintWriter(file, "UTF-8");
+		file.createNewFile();
+		pw.println(jsonData);
+		pw.flush();
+		try {
+			boolean isSuccess = ftpClient.storeFile("/INSPIEN_JSON_[김도현]_["+now+"].txt", new FileInputStream(file));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		ftpClient.logout();
-		////////////////////////////////////
 	}
 	
 	

@@ -1,8 +1,6 @@
 package inspien.vo;
 
-import java.util.List;
-import java.util.Map;
-
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.PropertyNamingStrategies;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
@@ -21,7 +19,6 @@ import lombok.ToString;
 @ToString
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
 public class RecordVo {
-	private List<Map<String, String>> record;
 	private String names;
 	private String phone;
 	private String email;
@@ -35,5 +32,6 @@ public class RecordVo {
 	private String street;
 	private String zipCode;
 	private String creditCard;
+	@JsonProperty("GUID")
 	private String guid;
 }
